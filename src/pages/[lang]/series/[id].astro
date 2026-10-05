@@ -1,0 +1,178 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import AppBanner from '../../../components/AppBanner.astro';
+import EpisodeList from '../../../components/EpisodeList.astro';
+import MediaCard from '../../../components/MediaCard.astro';
+import type { SupportedLang, MediaItem, Episode } from '../../../utils/types';
+import { getTranslation, getLocalizedField } from '../../../utils/i18n';
+import { getAllMediaItems, getMediaItemById, getEpisodesForSeries } from '../../../firebase/client';
+
+export async function getStaticPaths() {
+  const allItems = await getAllMediaItems();
+  const seriesList = allItems.filter(i => i.type === 'series');
+
+  const paths: Array<{ params: { lang: string; id: string } }> = [];
+
+  seriesList.forEach(series => {
+    paths.push({ params: { lang: 'ar', id: series.id } });
+    paths.push({ params: { lang: 'en', id: series.id } });
+  });
+
+  return paths;
+}
+
+const { lang, id } = Astro.params as { lang: SupportedLang; id: string };
+const t = getTranslation(lang);
+
+// Fetch item details & episodes
+const series: MediaItem | null = await getMediaItemById(id);
+
+if (!series) {
+  return Astro.redirect(`/${lang}/`);
+}
+
+const episodes: Episode[] = await getEpisodesForSeries(id);
+
+const title = getLocalizedField(series, 'title', lang);
+const description = getLocalizedField(series, 'description', lang);
+const poster = series.posterUrl || series.backdropUrl || '/images/placeholder.jpg';
+const backdrop = series.backdropUrl || series.posterUrl || '/logo.png';
+
+// Fetch related series
+const allItems = await getAllMediaItems();
+const relatedSeries = allItems.filter(i => i.id !== series.id && i.type === 'series').slice(0, 5);
+
+// Schema.org TVSeries Structured Data
+const seriesSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'TVSeries',
+  'name': title,
+  'description': description,
+  'image': poster,
+  'dateCreated': series.releaseYear ? `${series.releaseYear}` : undefined,
+  'genre': series.category ? [series.category, ...series.genres] : series.genres,
+  'numberOfEpisodes': episodes.length,
+  'aggregateRating': series.rating > 0 ? {
+    '@type': 'AggregateRating',
+    'ratingValue': series.rating,
+    'bestRating': '10',
+    'worstRating': '1',
+    'ratingCount': series.views ? Number(series.views) || 100 : 100
+  } : undefined
+};
+---
+
+<Layout
+  title={`${title} - ${t.series} | ${t.siteTitle}`}
+  description={description || `${title} - ${t.watchOnApp}`}
+  lang={lang}
+  image={poster}
+  ogType="video.tv_show"
+  schemaData={seriesSchema}
+  alternateAr={`/ar/series/${series.id}`}
+  alternateEn={`/en/series/${series.id}`}
+>
+  <!-- Series Header & Backdrop -->
+  <article class="relative rounded-3xl overflow-hidden border border-gray-800/80 bg-[#12141e] shadow-2xl mb-12">
+    <!-- Backdrop Image -->
+    <div class="relative w-full h-[280px] sm:h-[420px] overflow-hidden bg-gray-900">
+      <img
+        src={backdrop}
+        alt={title}
+        class="w-full h-full object-cover"
+        onerror="this.onerror=null; this.src='https://via.placeholder.com/1200x500/12141e/ffffff?text=Drama+Pro';"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#12141e] via-[#12141e]/70 to-transparent"></div>
+    </div>
+
+    <!-- Content details grid -->
+    <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 -mt-32 sm:-mt-48 pb-8 flex flex-col md:flex-row gap-6 sm:gap-8 items-center md:items-start">
+      <!-- Vertical Poster Card -->
+      <div class="w-44 sm:w-60 flex-shrink-0 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-2xl shadow-orange-950/60 bg-gray-900 aspect-[2/3]">
+        <img
+          src={poster}
+          alt={title}
+          class="w-full h-full object-cover"
+          onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450/13151f/ffffff?text=Drama+Pro';"
+        />
+      </div>
+
+      <!-- Metadata & Info -->
+      <div class="flex-grow space-y-4 text-center md:text-start">
+        <div class="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+          <span class="px-3 py-1 rounded-lg bg-purple-600 text-white font-black text-xs uppercase tracking-wider">
+            {t.series}
+          </span>
+
+          {series.releaseYear > 0 && (
+            <span class="px-3 py-1 rounded-lg bg-gray-800/90 text-gray-200 font-bold text-xs border border-gray-700">
+              {series.releaseYear}
+            </span>
+          )}
+
+          {series.category && (
+            <span class="px-3 py-1 rounded-lg bg-gray-800/90 text-gray-200 font-bold text-xs border border-gray-700">
+              {series.category}
+            </span>
+          )}
+
+          {series.rating > 0 && (
+            <span class="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-400 font-extrabold text-xs border border-amber-500/40 flex items-center gap-1">
+              ★ {series.rating.toFixed(1)}
+            </span>
+          )}
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl font-black text-white leading-tight">
+          {title}
+        </h1>
+
+        {description && (
+          <div class="space-y-1">
+            <h3 class="text-xs font-black uppercase tracking-wider text-purple-400">{t.synopsis}</h3>
+            <p class="text-sm sm:text-base text-gray-300 leading-relaxed max-w-3xl">
+              {description}
+            </p>
+          </div>
+        )}
+
+        <!-- Watch on App Action -->
+        <div class="pt-4 flex flex-wrap items-center justify-center md:justify-start gap-4">
+          <a
+            href="/download/"
+            class="px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-black font-black text-sm shadow-xl shadow-orange-950/60 flex items-center gap-2.5 transition-all hover:scale-105"
+          >
+            <svg class="w-5 h-5 fill-current text-black" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <span>{t.watchOnApp}</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- Episode List Component -->
+  <EpisodeList episodes={episodes} lang={lang} seriesTitle={title} />
+
+  <!-- App Banner CTA -->
+  <AppBanner lang={lang} title={title} />
+
+  <!-- Related Series -->
+  {relatedSeries.length > 0 && (
+    <section class="my-12 space-y-6">
+      <div class="border-b border-gray-800/80 pb-3">
+        <h3 class="text-xl font-black text-white flex items-center gap-3">
+          <span class="w-2.5 h-7 bg-purple-500 rounded-full inline-block"></span>
+          {t.relatedMedia}
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {relatedSeries.map(item => (
+          <MediaCard item={item} lang={lang} />
+        ))}
+      </div>
+    </section>
+  )}
+</Layout>

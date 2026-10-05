@@ -1,0 +1,88 @@
+---
+import type { SupportedLang } from '../utils/types';
+import { getTranslation } from '../utils/i18n';
+
+interface Props {
+  lang: SupportedLang;
+  currentPath: string;
+}
+
+const { lang, currentPath } = Astro.props;
+const t = getTranslation(lang);
+
+// Calculate target language path switch
+const targetLang = lang === 'ar' ? 'en' : 'ar';
+let langSwitchPath = currentPath;
+if (currentPath.startsWith('/ar')) {
+  langSwitchPath = currentPath.replace('/ar', '/en');
+} else if (currentPath.startsWith('/en')) {
+  langSwitchPath = currentPath.replace('/en', '/ar');
+} else {
+  langSwitchPath = `/${targetLang}/`;
+}
+---
+
+<header class="sticky top-0 z-50 bg-[#08090c]/95 backdrop-blur-md border-b border-gray-800/80 transition-colors">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+    <!-- Brand Logo using ORIGINAL Drama Pro Logo Asset -->
+    <a href={`/${lang}/`} class="flex items-center gap-3 group">
+      <div class="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shadow-lg shadow-orange-950/50 border border-amber-500/30 group-hover:border-orange-500/80 transition-all duration-300 group-hover:scale-105">
+        <img
+          src="/logo.png"
+          alt="Drama Pro Logo"
+          class="w-full h-full object-cover"
+        />
+      </div>
+      <div class="flex flex-col">
+        <span class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-amber-200 via-orange-400 to-amber-500 bg-clip-text text-transparent">
+          DRAMA <span class="text-orange-500">PRO</span>
+        </span>
+      </div>
+    </a>
+
+    <!-- Navigation Links -->
+    <nav class="hidden md:flex items-center gap-8 font-extrabold text-sm">
+      <a
+        href={`/${lang}/`}
+        class={`transition-colors py-1 ${currentPath.endsWith(`/${lang}/`) || currentPath.endsWith(`/${lang}`) ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-300 hover:text-orange-400'}`}
+      >
+        {t.home}
+      </a>
+      <a
+        href={`/${lang}/#movies`}
+        class="text-gray-300 hover:text-orange-400 transition-colors py-1"
+      >
+        {t.movies}
+      </a>
+      <a
+        href={`/${lang}/#series`}
+        class="text-gray-300 hover:text-orange-400 transition-colors py-1"
+      >
+        {t.series}
+      </a>
+    </nav>
+
+    <!-- Header Actions -->
+    <div class="flex items-center gap-3">
+      <!-- Language Switcher -->
+      <a
+        href={langSwitchPath}
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141722] hover:bg-[#1a1e2b] text-xs font-bold text-gray-200 border border-gray-700/60 hover:border-orange-500/50 transition-all hover:scale-105"
+        title="Switch Language"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+        </svg>
+        <span>{t.switchLang}</span>
+      </a>
+
+      <!-- Watch on App CTA button -->
+      <a
+        href="/download/"
+        class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-black font-extrabold text-xs shadow-md shadow-orange-950/50 transition-all hover:shadow-orange-800/60 hover:scale-105"
+      >
+        <span>{t.downloadApp}</span>
+      </a>
+    </div>
+  </div>
+</header>

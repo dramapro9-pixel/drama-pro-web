@@ -1,0 +1,78 @@
+---
+import type { Episode, SupportedLang } from '../utils/types';
+import { getLocalizedField, getTranslation } from '../utils/i18n';
+
+interface Props {
+  episodes: Episode[];
+  lang: SupportedLang;
+  seriesTitle: string;
+}
+
+const { episodes, lang, seriesTitle } = Astro.props;
+const t = getTranslation(lang);
+---
+
+<div class="space-y-5 my-10">
+  <div class="flex items-center justify-between border-b border-gray-800/80 pb-3">
+    <h3 class="text-2xl font-black text-white flex items-center gap-3">
+      <span class="w-2.5 h-7 bg-orange-500 rounded-full inline-block"></span>
+      {t.episodes} ({episodes.length})
+    </h3>
+  </div>
+
+  {episodes.length === 0 ? (
+    <p class="text-gray-400 text-sm italic">{t.noItemsFound}</p>
+  ) : (
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+      {episodes.map((ep) => {
+        const epTitle = getLocalizedField(ep, 'title', lang) || `${t.episode} ${ep.order || ''}`;
+        const epThumb = ep.thumbnailUrl || '/images/placeholder-episode.jpg';
+
+        return (
+          <div class="group relative bg-[#13151f] rounded-2xl overflow-hidden border border-gray-800/80 hover:border-orange-500/60 transition-all flex flex-col hover:shadow-lg hover:shadow-orange-950/20">
+            <!-- Thumbnail -->
+            <div class="relative aspect-video w-full bg-gray-900 overflow-hidden">
+              <img
+                src={epThumb}
+                alt={epTitle}
+                loading="lazy"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                onerror="this.onerror=null; this.src='https://via.placeholder.com/400x225/13151f/ffffff?text=Drama+Pro';"
+              />
+
+              <!-- Episode Number Overlay -->
+              <div class="absolute top-2.5 left-2.5 bg-black/85 backdrop-blur-md px-2.5 py-0.5 rounded-lg text-xs font-black text-orange-400 border border-orange-500/30">
+                #{ep.order}
+              </div>
+
+              {ep.duration && (
+                <div class="absolute bottom-2.5 right-2.5 bg-black/85 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-bold text-gray-300">
+                  {ep.duration}
+                </div>
+              )}
+            </div>
+
+            <!-- Info & Watch in App CTA -->
+            <div class="p-4 flex flex-col flex-grow justify-between gap-3">
+              <div>
+                <h4 class="font-extrabold text-sm text-gray-100 group-hover:text-orange-400 transition-colors line-clamp-1">
+                  {epTitle}
+                </h4>
+              </div>
+
+              <a
+                href="/download/"
+                class="mt-2 w-full py-2.5 px-3 rounded-xl bg-[#1b1e2c] hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-600 text-gray-200 hover:text-black font-extrabold text-xs text-center transition-all flex items-center justify-center gap-1.5"
+              >
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span>{t.watchOnApp}</span>
+              </a>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</div>

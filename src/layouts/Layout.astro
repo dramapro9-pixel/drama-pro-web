@@ -1,0 +1,108 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import type { SupportedLang } from '../utils/types';
+import { getTranslation } from '../utils/i18n';
+
+interface Props {
+  title: string;
+  description: string;
+  lang?: SupportedLang;
+  image?: string;
+  canonicalUrl?: string;
+  ogType?: string;
+  schemaData?: object;
+  alternateAr?: string;
+  alternateEn?: string;
+}
+
+const {
+  title,
+  description,
+  lang = 'ar',
+  image = '/logo.png',
+  canonicalUrl = Astro.url.href,
+  ogType = 'website',
+  schemaData,
+  alternateAr = Astro.url.pathname.replace(/^\/(en|ar)/, '/ar'),
+  alternateEn = Astro.url.pathname.replace(/^\/(en|ar)/, '/en')
+} = Astro.props;
+
+const t = getTranslation(lang);
+const siteName = 'Drama Pro | دراما برو';
+const fullImageUrl = image.startsWith('http') ? image : new URL(image, Astro.site).href;
+---
+
+<!DOCTYPE html>
+<html lang={lang} dir={t.dir} class="dark bg-[#08090c] text-gray-100 antialiased selection:bg-orange-500 selection:text-black">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Alternate Language Tags for SEO -->
+    <link rel="alternate" hreflang="ar" href={new URL(alternateAr, Astro.site).href} />
+    <link rel="alternate" hreflang="en" href={new URL(alternateEn, Astro.site).href} />
+    <link rel="alternate" hreflang="x-default" href={new URL('/ar/', Astro.site).href} />
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={fullImageUrl} />
+    <meta property="og:locale" content={lang === 'ar' ? 'ar_AR' : 'en_US'} />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={fullImageUrl} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Schema.org Structured Data for Google Rich Snippets -->
+    {schemaData && (
+      <script type="application/ld+json" set:html={JSON.stringify(schemaData)} />
+    )}
+  </head>
+  <body class="min-h-screen flex flex-col font-sans bg-[#08090c] text-gray-100 overflow-x-hidden">
+    <Header lang={lang} currentPath={Astro.url.pathname} />
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+  </body>
+</html>
+
+<style is:global>
+  body {
+    font-family: 'Tajawal', 'Cairo', system-ui, -apple-system, sans-serif;
+  }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #08090c;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1c202e;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #ff7700;
+  }
+</style>

@@ -1,0 +1,146 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getTranslation } from '../utils/i18n';
+
+const lang = 'ar';
+const t = getTranslation(lang);
+
+const rustoreUrl = 'https://www.rustore.ru/catalog/app/com.dramapro.app';
+const mediafireUrl = 'https://www.mediafire.com/file/58b1us7ehsaaqwz/Drama_Pro.apk/file';
+
+const pageTitle = 'تحميل تطبيق دراما برو للأندرويد | Download Drama Pro APK';
+const pageDesc = 'تحميل تطبيق دراما برو مجاناً للأندرويد لمشاهدة أحدث الأفلام والمسلسلات العربية والعالمية بجودة عالية بدون إعلانات.';
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDesc}
+  lang={lang}
+  image="/logo.png"
+  canonicalUrl={`${Astro.site?.href}download/`}
+>
+  <div class="max-w-4xl mx-auto py-8 px-2 sm:px-4 space-y-10">
+    <!-- Header Hero Banner -->
+    <div class="text-center space-y-5 bg-gradient-to-b from-[#121420] to-[#08090c] p-8 sm:p-12 rounded-3xl border border-gray-800/80 shadow-2xl relative overflow-hidden">
+      <!-- Glow effect -->
+      <div class="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 bg-orange-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- App Logo -->
+      <div class="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-2xl shadow-orange-950/80 hover:scale-105 transition-transform duration-300">
+        <img src="/logo.png" alt="Drama Pro Logo" class="w-full h-full object-cover" />
+      </div>
+
+      <!-- Android Badge -->
+      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-950/70 border border-orange-600/40 text-orange-400 text-xs font-black uppercase tracking-wider">
+        <svg class="w-4 h-4 fill-current text-orange-500" viewBox="0 0 24 24">
+          <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.552 0 1 .4482 1 .9993s-.448.9997-1 .9997zm-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.552 0 1 .4482 1 .9993s-.448.9997-1 .9997zm11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1523-.5676.416.416 0 00-.5677.1523l-2.0223 3.5028c-1.2854-.5858-2.734-.9167-4.2865-.9167-1.5526 0-3.0012.3309-4.2866.9167l-2.0223-3.5028a.4158.4158 0 00-.5677-.1523.416.416 0 00-.1523.5676l1.9973 3.4592c-3.0645 1.6669-5.1843 4.8028-5.4678 8.4784h19.0068c-.2835-3.6756-2.4033-6.8115-5.4678-8.4784z"/>
+        </svg>
+        <span>Android App • تطبيق الأندرويد</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-black text-white leading-tight">
+        تحميل تطبيق <span class="bg-gradient-to-r from-amber-200 via-orange-400 to-amber-500 bg-clip-text text-transparent">Drama Pro</span>
+      </h1>
+
+      <p class="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+        استمتع بمشاهدة أحدث الأفلام والمسلسلات العربية والعالمية بجودة عالية وسرعة فائقة بدون إعلانات مزعجة على هاتفك الأندرويد.
+      </p>
+    </div>
+
+    <!-- Download Options Section -->
+    <div class="space-y-6">
+      <div class="text-center border-b border-gray-800 pb-3">
+        <h2 class="text-xl font-black text-white">اختر منصة التحميل / Choose Download Server</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- RuStore Option -->
+        <a
+          href={rustoreUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group relative flex flex-col justify-between bg-[#131520] hover:bg-[#181b2a] rounded-3xl p-6 border border-gray-800 hover:border-blue-500/70 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-950/30 hover:-translate-y-1"
+        >
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                  <path d="M4 4h16v16H4V4zm2 2v12h12V6H6z"/>
+                </svg>
+              </div>
+              <span class="px-3 py-1 bg-blue-950 text-blue-300 text-xs font-black rounded-full border border-blue-800/60">
+                متجر رسمي • Official
+              </span>
+            </div>
+
+            <div class="space-y-1">
+              <h3 class="text-2xl font-black text-white group-hover:text-blue-400 transition-colors">
+                RuStore
+              </h3>
+              <p class="text-xs text-gray-400 leading-relaxed">
+                التحميل المباشر والآمن عبر متجر RuStore الرسمي لتطبيقات الأندرويد.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-gray-800/60 flex items-center justify-between text-xs font-bold text-blue-400">
+            <span>تحميل من RuStore</span>
+            <svg class="w-4 h-4 fill-current transform group-hover:translate-x-1 transition-transform rtl:rotate-180" viewBox="0 0 24 24">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- MediaFire Option -->
+        <a
+          href={mediafireUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group relative flex flex-col justify-between bg-[#131520] hover:bg-[#181b2a] rounded-3xl p-6 border border-gray-800 hover:border-orange-500/70 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-950/30 hover:-translate-y-1"
+        >
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="w-12 h-12 rounded-2xl bg-orange-600/20 border border-orange-500/40 flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+                </svg>
+              </div>
+              <span class="px-3 py-1 bg-orange-950 text-orange-300 text-xs font-black rounded-full border border-orange-800/60">
+                تنزيل APK • Direct APK
+              </span>
+            </div>
+
+            <div class="space-y-1">
+              <h3 class="text-2xl font-black text-white group-hover:text-orange-400 transition-colors">
+                MediaFire
+              </h3>
+              <p class="text-xs text-gray-400 leading-relaxed">
+                تنزيل ملف APK مباشر لتطبيق Drama Pro عبر سيرفر MediaFire السريع.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-gray-800/60 flex items-center justify-between text-xs font-bold text-orange-400">
+            <span>تنزيل APK (MediaFire)</span>
+            <svg class="w-4 h-4 fill-current transform group-hover:translate-x-1 transition-transform rtl:rotate-180" viewBox="0 0 24 24">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Back to Catalog CTA -->
+    <div class="text-center pt-6">
+      <a
+        href="/ar/"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gray-900 hover:bg-gray-800 text-gray-300 hover:text-white font-bold text-xs border border-gray-800 transition-colors"
+      >
+        <svg class="w-4 h-4 fill-current rtl:rotate-180" viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+        <span>العودة للرئيسية / Return to Catalog</span>
+      </a>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,171 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import AppBanner from '../../../components/AppBanner.astro';
+import MediaCard from '../../../components/MediaCard.astro';
+import type { SupportedLang, MediaItem } from '../../../utils/types';
+import { getTranslation, getLocalizedField } from '../../../utils/i18n';
+import { getAllMediaItems, getMediaItemById } from '../../../firebase/client';
+
+export async function getStaticPaths() {
+  const allItems = await getAllMediaItems();
+  const movies = allItems.filter(i => i.type === 'movie' || !i.type);
+
+  const paths: Array<{ params: { lang: string; id: string } }> = [];
+
+  movies.forEach(movie => {
+    paths.push({ params: { lang: 'ar', id: movie.id } });
+    paths.push({ params: { lang: 'en', id: movie.id } });
+  });
+
+  return paths;
+}
+
+const { lang, id } = Astro.params as { lang: SupportedLang; id: string };
+const t = getTranslation(lang);
+
+// Fetch item details
+const movie: MediaItem | null = await getMediaItemById(id);
+
+if (!movie) {
+  return Astro.redirect(`/${lang}/`);
+}
+
+const title = getLocalizedField(movie, 'title', lang);
+const description = getLocalizedField(movie, 'description', lang);
+const poster = movie.posterUrl || movie.backdropUrl || '/images/placeholder.jpg';
+const backdrop = movie.backdropUrl || movie.posterUrl || '/logo.png';
+
+// Fetch related movies
+const allItems = await getAllMediaItems();
+const relatedMovies = allItems.filter(i => i.id !== movie.id && i.type === 'movie').slice(0, 5);
+
+// Schema.org Movie Structured Data
+const movieSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Movie',
+  'name': title,
+  'description': description,
+  'image': poster,
+  'dateCreated': movie.releaseYear ? `${movie.releaseYear}` : undefined,
+  'genre': movie.category ? [movie.category, ...movie.genres] : movie.genres,
+  'aggregateRating': movie.rating > 0 ? {
+    '@type': 'AggregateRating',
+    'ratingValue': movie.rating,
+    'bestRating': '10',
+    'worstRating': '1',
+    'ratingCount': movie.views ? Number(movie.views) || 100 : 100
+  } : undefined
+};
+---
+
+<Layout
+  title={`${title} - ${t.movies} | ${t.siteTitle}`}
+  description={description || `${title} - ${t.watchOnApp}`}
+  lang={lang}
+  image={poster}
+  ogType="video.movie"
+  schemaData={movieSchema}
+  alternateAr={`/ar/movie/${movie.id}`}
+  alternateEn={`/en/movie/${movie.id}`}
+>
+  <!-- Movie Hero Backdrop & Details Header -->
+  <article class="relative rounded-3xl overflow-hidden border border-gray-800/80 bg-[#12141e] shadow-2xl mb-12">
+    <!-- Backdrop Image -->
+    <div class="relative w-full h-[280px] sm:h-[420px] overflow-hidden bg-gray-900">
+      <img
+        src={backdrop}
+        alt={title}
+        class="w-full h-full object-cover"
+        onerror="this.onerror=null; this.src='https://via.placeholder.com/1200x500/12141e/ffffff?text=Drama+Pro';"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#12141e] via-[#12141e]/70 to-transparent"></div>
+    </div>
+
+    <!-- Content details grid -->
+    <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 -mt-32 sm:-mt-48 pb-8 flex flex-col md:flex-row gap-6 sm:gap-8 items-center md:items-start">
+      <!-- Vertical Poster Card -->
+      <div class="w-44 sm:w-60 flex-shrink-0 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-2xl shadow-orange-950/60 bg-gray-900 aspect-[2/3]">
+        <img
+          src={poster}
+          alt={title}
+          class="w-full h-full object-cover"
+          onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450/13151f/ffffff?text=Drama+Pro';"
+        />
+      </div>
+
+      <!-- Metadata & Info -->
+      <div class="flex-grow space-y-4 text-center md:text-start">
+        <div class="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+          <span class="px-3 py-1 rounded-lg bg-gradient-to-r from-orange-500 to-amber-600 text-black font-black text-xs uppercase tracking-wider">
+            {t.movies}
+          </span>
+
+          {movie.releaseYear > 0 && (
+            <span class="px-3 py-1 rounded-lg bg-gray-800/90 text-gray-200 font-bold text-xs border border-gray-700">
+              {movie.releaseYear}
+            </span>
+          )}
+
+          {movie.category && (
+            <span class="px-3 py-1 rounded-lg bg-gray-800/90 text-gray-200 font-bold text-xs border border-gray-700">
+              {movie.category}
+            </span>
+          )}
+
+          {movie.rating > 0 && (
+            <span class="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-400 font-extrabold text-xs border border-amber-500/40 flex items-center gap-1">
+              ★ {movie.rating.toFixed(1)}
+            </span>
+          )}
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl font-black text-white leading-tight">
+          {title}
+        </h1>
+
+        {description && (
+          <div class="space-y-1">
+            <h3 class="text-xs font-black uppercase tracking-wider text-orange-400">{t.synopsis}</h3>
+            <p class="text-sm sm:text-base text-gray-300 leading-relaxed max-w-3xl">
+              {description}
+            </p>
+          </div>
+        )}
+
+        <!-- Watch on App Action -->
+        <div class="pt-4 flex flex-wrap items-center justify-center md:justify-start gap-4">
+          <a
+            href="/download/"
+            class="px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-black font-black text-sm shadow-xl shadow-orange-950/60 flex items-center gap-2.5 transition-all hover:scale-105"
+          >
+            <svg class="w-5 h-5 fill-current text-black" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <span>{t.watchOnApp}</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- Watch on Drama Pro Banner -->
+  <AppBanner lang={lang} title={title} />
+
+  <!-- Related Movies -->
+  {relatedMovies.length > 0 && (
+    <section class="my-12 space-y-6">
+      <div class="border-b border-gray-800/80 pb-3">
+        <h3 class="text-xl font-black text-white flex items-center gap-3">
+          <span class="w-2.5 h-7 bg-orange-500 rounded-full inline-block"></span>
+          {t.relatedMedia}
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {relatedMovies.map(item => (
+          <MediaCard item={item} lang={lang} />
+        ))}
+      </div>
+    </section>
+  )}
+</Layout>

@@ -1,0 +1,157 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MediaCard from '../../components/MediaCard.astro';
+import AppBanner from '../../components/AppBanner.astro';
+import type { SupportedLang, MediaItem } from '../../utils/types';
+import { getTranslation, getLocalizedField } from '../../utils/i18n';
+import { getAllMediaItems } from '../../firebase/client';
+
+export async function getStaticPaths() {
+  return [
+    { params: { lang: 'ar' } },
+    { params: { lang: 'en' } }
+  ];
+}
+
+const { lang } = Astro.params as { lang: SupportedLang };
+const t = getTranslation(lang);
+
+// Fetch items from Firestore
+const allItems: MediaItem[] = await getAllMediaItems();
+
+const movies = allItems.filter(i => i.type === 'movie');
+const series = allItems.filter(i => i.type === 'series');
+const featuredItems = allItems.filter(i => i.featured).slice(0, 5);
+const heroItem = featuredItems.length > 0 ? featuredItems[0] : (allItems[0] || null);
+
+const heroTitle = heroItem ? getLocalizedField(heroItem, 'title', lang) : t.siteTitle;
+const heroDesc = heroItem ? getLocalizedField(heroItem, 'description', lang) : t.siteDescription;
+const heroBackdrop = heroItem?.backdropUrl || heroItem?.posterUrl || '/logo.png';
+
+// Schema.org WebSite JSON-LD
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  'name': 'Drama Pro',
+  'alternateName': 'دراما برو',
+  'url': Astro.site?.href,
+  'inLanguage': [ 'ar', 'en' ],
+  'description': t.siteDescription
+};
+---
+
+<Layout
+  title={t.siteTitle}
+  description={t.siteDescription}
+  lang={lang}
+  image={heroBackdrop}
+  schemaData={websiteSchema}
+>
+  <!-- Hero Section -->
+  {heroItem && (
+    <section class="relative rounded-3xl overflow-hidden mb-12 border border-gray-800/80 shadow-2xl bg-[#0e1017] min-h-[400px] md:min-h-[500px] flex items-end">
+      <!-- Hero Background Image -->
+      <img
+        src={heroBackdrop}
+        alt={heroTitle}
+        class="absolute inset-0 w-full h-full object-cover"
+        onerror="this.onerror=null; this.src='https://via.placeholder.com/1200x600/0e1017/ffffff?text=Drama+Pro';"
+      />
+
+      <!-- Dark Gradient Overlays -->
+      <div class="absolute inset-0 bg-gradient-to-t from-[#08090c] via-[#08090c]/70 to-transparent"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#08090c]/90 via-[#08090c]/50 to-transparent"></div>
+
+      <!-- Hero Content -->
+      <div class="relative z-10 p-6 sm:p-12 max-w-3xl space-y-4">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <span class="px-3 py-1 bg-gradient-to-r from-orange-500 to-amber-600 text-black font-black text-xs rounded-lg uppercase tracking-wider shadow-lg">
+            {t.featured}
+          </span>
+          {heroItem.category && (
+            <span class="px-3 py-1 bg-black/70 backdrop-blur-md text-gray-200 font-bold text-xs rounded-lg border border-gray-700/80">
+              {heroItem.category}
+            </span>
+          )}
+          {heroItem.rating > 0 && (
+            <span class="px-3 py-1 bg-amber-500/20 backdrop-blur-md text-amber-400 font-extrabold text-xs rounded-lg border border-amber-500/40 flex items-center gap-1">
+              ★ {heroItem.rating.toFixed(1)}
+            </span>
+          )}
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl font-black text-white leading-tight drop-shadow-md">
+          {heroTitle}
+        </h1>
+
+        <p class="text-sm sm:text-base text-gray-300 line-clamp-3 leading-relaxed max-w-2xl">
+          {heroDesc}
+        </p>
+
+        <div class="pt-3 flex flex-wrap items-center gap-3">
+          <a
+            href={`/${lang}/${heroItem.type === 'series' ? 'series' : 'movie'}/${heroItem.id}`}
+            class="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-black font-black text-sm transition-all shadow-xl shadow-orange-950/60 flex items-center gap-2 hover:scale-105"
+          >
+            <svg class="w-4 h-4 fill-current text-black" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+            </svg>
+            <span>{heroItem.type === 'series' ? t.series : t.movies}</span>
+          </a>
+
+          <a
+            href="/download/"
+            class="px-6 py-3.5 rounded-2xl bg-[#141724]/90 hover:bg-[#1a1e2f] text-gray-200 font-extrabold text-sm transition-colors border border-gray-700/80 hover:border-orange-500/50"
+          >
+            {t.watchOnApp}
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Movies Catalog Section -->
+  <section id="movies" class="my-12 space-y-6">
+    <div class="flex items-center justify-between border-b border-gray-800/80 pb-3">
+      <h2 class="text-2xl font-black text-white flex items-center gap-3">
+        <span class="w-2.5 h-7 bg-orange-500 rounded-full inline-block"></span>
+        {t.movies}
+      </h2>
+      <span class="text-xs text-orange-400 font-extrabold bg-orange-950/60 px-3 py-1 rounded-full border border-orange-600/30">{movies.length} {t.movies}</span>
+    </div>
+
+    {movies.length === 0 ? (
+      <p class="text-gray-400 text-sm py-8 text-center">{t.noItemsFound}</p>
+    ) : (
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+        {movies.map(movie => (
+          <MediaCard item={movie} lang={lang} />
+        ))}
+      </div>
+    )}
+  </section>
+
+  <!-- App Download Banner CTA -->
+  <AppBanner lang={lang} />
+
+  <!-- Series Catalog Section -->
+  <section id="series" class="my-12 space-y-6">
+    <div class="flex items-center justify-between border-b border-gray-800/80 pb-3">
+      <h2 class="text-2xl font-black text-white flex items-center gap-3">
+        <span class="w-2.5 h-7 bg-purple-500 rounded-full inline-block"></span>
+        {t.series}
+      </h2>
+      <span class="text-xs text-purple-400 font-extrabold bg-purple-950/60 px-3 py-1 rounded-full border border-purple-600/30">{series.length} {t.series}</span>
+    </div>
+
+    {series.length === 0 ? (
+      <p class="text-gray-400 text-sm py-8 text-center">{t.noItemsFound}</p>
+    ) : (
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+        {series.map(s => (
+          <MediaCard item={s} lang={lang} />
+        ))}
+      </div>
+    )}
+  </section>
+</Layout>

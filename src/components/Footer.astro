@@ -1,0 +1,60 @@
+---
+import type { SupportedLang } from '../utils/types';
+import { getTranslation } from '../utils/i18n';
+
+interface Props {
+  lang: SupportedLang;
+}
+
+const { lang } = Astro.props;
+const t = getTranslation(lang);
+---
+
+<footer class="bg-[#050608] border-t border-gray-800/80 mt-16 text-gray-400 text-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      <!-- Brand column with ORIGINAL Logo -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-amber-500/30">
+            <img src="/logo.png" alt="Drama Pro Logo" class="w-full h-full object-cover" />
+          </div>
+          <span class="text-xl font-extrabold text-white tracking-wider">
+            DRAMA <span class="text-orange-500">PRO</span>
+          </span>
+        </div>
+        <p class="text-xs text-gray-400 leading-relaxed max-w-sm">
+          {t.siteDescription}
+        </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h4 class="text-white font-bold text-sm mb-3">{t.home}</h4>
+        <ul class="space-y-2 text-xs">
+          <li><a href={`/${lang}/`} class="hover:text-orange-400 transition-colors">{t.home}</a></li>
+          <li><a href={`/${lang}/#movies`} class="hover:text-orange-400 transition-colors">{t.movies}</a></li>
+          <li><a href={`/${lang}/#series`} class="hover:text-orange-400 transition-colors">{t.series}</a></li>
+        </ul>
+      </div>
+
+      <!-- Languages & SEO links -->
+      <div>
+        <h4 class="text-white font-bold text-sm mb-3">Languages / اللغات</h4>
+        <div class="flex flex-col gap-2 text-xs">
+          <a href="/ar/" class="hover:text-orange-400 transition-colors">العربية (Arabic)</a>
+          <a href="/en/" class="hover:text-orange-400 transition-colors">English</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-8 border-t border-gray-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+      <p>{t.allRightsReserved}</p>
+      <div class="flex gap-4">
+        <span>{t.privacyPolicy}</span>
+        <span>•</span>
+        <span>{t.termsOfService}</span>
+      </div>
+    </div>
+  </div>
+</footer>
