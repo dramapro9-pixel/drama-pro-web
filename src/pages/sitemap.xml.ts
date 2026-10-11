@@ -15,8 +15,8 @@ export const GET: APIRoute = async ({ site }) => {
 
   allMedia.forEach((item) => {
     const typePath = item.type === 'series' ? 'series' : 'movie';
-    dynamicUrls.push(`${baseUrl}/ar/${typePath}/${item.id}`);
-    dynamicUrls.push(`${baseUrl}/en/${typePath}/${item.id}`);
+    dynamicUrls.push(`${baseUrl}/ar/${typePath}/${item.id}/`);
+    dynamicUrls.push(`${baseUrl}/en/${typePath}/${item.id}/`);
   });
 
   const allUrls = [...staticUrls, ...dynamicUrls];
@@ -26,9 +26,9 @@ export const GET: APIRoute = async ({ site }) => {
   ${allUrls
     .map((url) => {
       const isAr = url.includes('/ar/');
-      const altUrl = isAr ? url.replace('/ar/', '/en/') : url.replace('/en/', '/ar/');
-      const arUrl = isAr ? url : altUrl;
-      const enUrl = isAr ? altUrl : url;
+      const isEn = url.includes('/en/');
+      const arUrl = isAr ? url : (isEn ? url.replace('/en/', '/ar/') : url);
+      const enUrl = isEn ? url : (isAr ? url.replace('/ar/', '/en/') : url);
 
       return `
   <url>
