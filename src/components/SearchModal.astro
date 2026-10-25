@@ -1,0 +1,417 @@
+---
+import type { SupportedLang } from '../utils/types';
+import { getTranslation } from '../utils/i18n';
+
+interface Props {
+  lang: SupportedLang;
+}
+
+const { lang } = Astro.props;
+const t = getTranslation(lang);
+---
+
+<div
+  id="search-modal"
+  class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center pt-12 sm:pt-20 px-4 transition-opacity duration-200 opacity-0 pointer-events-none"
+  aria-hidden="true"
+  role="dialog"
+  aria-label={t.searchTitle}
+>
+  <div
+    class="relative bg-[#11131c] border border-orange-500/30 rounded-3xl shadow-2xl shadow-orange-950/40 max-w-2xl w-full p-4 sm:p-6 overflow-hidden flex flex-col max-h-[85vh] transform transition-transform duration-200 scale-95"
+    id="search-modal-container"
+  >
+    <!-- Top Search Input Header Bar -->
+    <div class="flex items-center gap-3 pb-4 border-b border-gray-800/80">
+      <!-- Orange Magnifying Glass Icon -->
+      <div class="text-orange-500 flex-shrink-0">
+        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+      </div>
+
+      <!-- Main Search Text Input -->
+      <input
+        type="text"
+        id="search-input"
+        placeholder={t.searchPlaceholder}
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        class="bg-transparent border-none outline-none text-white font-extrabold text-base sm:text-lg w-full placeholder-gray-500"
+      />
+
+      <!-- Loading Spinner -->
+      <div id="search-spinner" class="hidden flex-shrink-0">
+        <svg class="w-5 h-5 text-orange-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+
+      <!-- Clear Input Button -->
+      <button
+        type="button"
+        id="search-clear-btn"
+        class="hidden text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800/80 transition-colors flex-shrink-0"
+        title={t.clearSearch}
+      >
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+
+      <!-- Close Modal Button -->
+      <button
+        type="button"
+        id="search-close-btn"
+        class="text-gray-400 hover:text-white px-2.5 py-1 rounded-xl bg-gray-800/80 hover:bg-gray-700 text-xs font-bold border border-gray-700 transition-colors flex items-center gap-1 flex-shrink-0"
+        title={t.closeSearch}
+      >
+        <span>Esc</span>
+      </button>
+    </div>
+
+    <!-- Search Prompt Initial View -->
+    <div id="search-prompt-view" class="py-12 text-center text-gray-400 space-y-2">
+      <svg class="w-12 h-12 text-gray-600 mx-auto stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <p class="text-sm font-semibold text-gray-400">{t.typeToSearch}</p>
+    </div>
+
+    <!-- No Results Empty View -->
+    <div id="search-empty-view" class="hidden py-12 text-center text-gray-400 space-y-2">
+      <svg class="w-12 h-12 text-orange-500/50 mx-auto fill-current" viewBox="0 0 24 24">
+        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+      </svg>
+      <p id="search-empty-text" class="text-sm font-bold text-gray-300">{t.searchNoResults}</p>
+    </div>
+
+    <!-- Error View -->
+    <div id="search-error-view" class="hidden py-10 text-center text-red-400 space-y-3">
+      <p class="text-sm font-bold">{t.searchError}</p>
+      <button id="search-retry-btn" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold text-xs rounded-xl border border-gray-700">
+        Retry
+      </button>
+    </div>
+
+    <!-- Dynamic Live Search Results List -->
+    <div id="search-results-list" class="hidden overflow-y-auto space-y-2.5 pt-3 pr-1"></div>
+  </div>
+</div>
+
+<script>
+  import { getAllMediaItems } from '../firebase/client';
+  import type { MediaItem } from '../utils/types';
+
+  const lang = (document.documentElement.lang || 'ar') as 'ar' | 'en';
+
+  // In-Memory Catalog Cache (Loads at most ONCE per page session)
+  let catalogCache: MediaItem[] | null = null;
+  let isFetching = false;
+  let selectedIndex = -1;
+
+  // UI Element References
+  const searchModal = document.getElementById('search-modal');
+  const modalContainer = document.getElementById('search-modal-container');
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const searchSpinner = document.getElementById('search-spinner');
+  const searchClearBtn = document.getElementById('search-clear-btn');
+  const searchCloseBtn = document.getElementById('search-close-btn');
+  const promptView = document.getElementById('search-prompt-view');
+  const emptyView = document.getElementById('search-empty-view');
+  const errorView = document.getElementById('search-error-view');
+  const resultsList = document.getElementById('search-results-list');
+  const retryBtn = document.getElementById('search-retry-btn');
+
+  // Arabic String Normalization for Flexible Fuzzy Searching
+  function normalizeText(text: string): string {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .replace(/[\u064B-\u0652]/g, '') // remove Arabic vowels/tashkeel
+      .trim();
+  }
+
+  // Ensure Catalog Data is Loaded (At most once per session)
+  async function ensureCatalogLoaded(): Promise<MediaItem[]> {
+    if (catalogCache) return catalogCache;
+
+    // Check if preloaded on window
+    if ((window as any).__DRAMA_PRO_CATALOG__) {
+      catalogCache = (window as any).__DRAMA_PRO_CATALOG__;
+      return catalogCache!;
+    }
+
+    if (isFetching) {
+      while (isFetching) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return catalogCache || [];
+    }
+
+    isFetching = true;
+    showSpinner(true);
+    showError(false);
+
+    try {
+      const items = await getAllMediaItems();
+      catalogCache = items;
+      (window as any).__DRAMA_PRO_CATALOG__ = items;
+      return items;
+    } catch (err) {
+      console.error('Failed to load search catalog:', err);
+      showError(true);
+      return [];
+    } finally {
+      isFetching = false;
+      showSpinner(false);
+    }
+  }
+
+  function showSpinner(show: boolean) {
+    if (searchSpinner) searchSpinner.classList.toggle('hidden', !show);
+  }
+
+  function showError(show: boolean) {
+    if (errorView) errorView.classList.toggle('hidden', !show);
+    if (promptView && show) promptView.classList.add('hidden');
+    if (resultsList && show) resultsList.classList.add('hidden');
+    if (emptyView && show) emptyView.classList.add('hidden');
+  }
+
+  export function openSearchModal(initialQuery = '') {
+    if (!searchModal) return;
+
+    searchModal.classList.remove('pointer-events-none');
+    searchModal.classList.remove('opacity-0');
+    searchModal.classList.add('opacity-100');
+    searchModal.setAttribute('aria-hidden', 'false');
+
+    if (modalContainer) {
+      modalContainer.classList.remove('scale-95');
+      modalContainer.classList.add('scale-100');
+    }
+
+    document.body.style.overflow = 'hidden';
+
+    // Start pre-loading catalog in background immediately on modal open
+    ensureCatalogLoaded();
+
+    if (searchInput) {
+      if (initialQuery) {
+        searchInput.value = initialQuery;
+      }
+      setTimeout(() => searchInput.focus(), 100);
+      handleSearchInput();
+    }
+  }
+
+  export function closeSearchModal() {
+    if (!searchModal) return;
+
+    searchModal.classList.add('opacity-0');
+    searchModal.classList.remove('opacity-100');
+    searchModal.classList.add('pointer-events-none');
+    searchModal.setAttribute('aria-hidden', 'true');
+
+    if (modalContainer) {
+      modalContainer.classList.add('scale-95');
+      modalContainer.classList.remove('scale-100');
+    }
+
+    document.body.style.overflow = '';
+    selectedIndex = -1;
+  }
+
+  async function handleSearchInput() {
+    const rawQuery = searchInput ? searchInput.value : '';
+    const query = normalizeText(rawQuery);
+
+    if (searchClearBtn) {
+      searchClearBtn.classList.toggle('hidden', rawQuery.length === 0);
+    }
+
+    if (!query) {
+      if (promptView) promptView.classList.remove('hidden');
+      if (emptyView) emptyView.classList.add('hidden');
+      if (resultsList) resultsList.classList.add('hidden');
+      selectedIndex = -1;
+      return;
+    }
+
+    const items = await ensureCatalogLoaded();
+    if (!items || items.length === 0) return;
+
+    // Filter Items
+    const matches = items.filter((item) => {
+      const titleArNorm = normalizeText(item.titleAr);
+      const titleEnNorm = normalizeText(item.titleEn);
+      const catNorm = normalizeText(item.category);
+      const genresNorm = normalizeText((item.genres || []).join(' '));
+
+      return (
+        titleArNorm.includes(query) ||
+        titleEnNorm.includes(query) ||
+        catNorm.includes(query) ||
+        genresNorm.includes(query)
+      );
+    });
+
+    renderResults(matches, rawQuery);
+  }
+
+  function renderResults(matches: MediaItem[], rawQuery: string) {
+    if (!resultsList || !promptView || !emptyView) return;
+
+    promptView.classList.add('hidden');
+    selectedIndex = -1;
+
+    if (matches.length === 0) {
+      resultsList.classList.add('hidden');
+      emptyView.classList.remove('hidden');
+      return;
+    }
+
+    emptyView.classList.add('hidden');
+    resultsList.classList.remove('hidden');
+    resultsList.innerHTML = '';
+
+    matches.forEach((item, idx) => {
+      const typePath = item.type === 'series' ? 'series' : 'movie';
+      const targetUrl = `/${lang}/${typePath}/${item.id}/`;
+
+      const primaryTitle = lang === 'en' ? (item.titleEn || item.titleAr) : (item.titleAr || item.titleEn);
+      const secondaryTitle = lang === 'en' ? item.titleAr : item.titleEn;
+      const poster = item.posterUrl || item.backdropUrl || '/images/placeholder.jpg';
+      const isSeries = item.type === 'series';
+
+      const card = document.createElement('a');
+      card.href = targetUrl;
+      card.dataset.index = String(idx);
+      card.className =
+        'search-result-item group flex items-center gap-3.5 p-2.5 rounded-2xl bg-[#171a28] hover:bg-[#202438] border border-gray-800/80 hover:border-orange-500/60 transition-all cursor-pointer';
+
+      card.innerHTML = `
+        <div class="w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 rounded-xl overflow-hidden bg-gray-900 border border-gray-700/60 aspect-[2/3]">
+          <img src="${poster}" alt="${primaryTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.onerror=null; this.src='https://via.placeholder.com/150x225/13151f/ffffff?text=Drama+Pro';" />
+        </div>
+        <div class="flex-grow space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-black text-white group-hover:text-orange-400 transition-colors line-clamp-1">${primaryTitle}</span>
+            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider ${isSeries ? 'bg-purple-950 text-purple-300 border border-purple-500/40' : 'bg-orange-950 text-orange-300 border border-orange-500/40'}">${isSeries ? (lang === 'en' ? 'Series' : 'مسلسل') : (lang === 'en' ? 'Movie' : 'فيلم')}</span>
+          </div>
+          ${secondaryTitle ? `<p class="text-xs text-gray-400 line-clamp-1 font-semibold">${secondaryTitle}</p>` : ''}
+          <div class="flex items-center gap-3 text-[11px] text-gray-400 pt-0.5">
+            ${item.releaseYear ? `<span>${item.releaseYear}</span>` : ''}
+            ${item.category ? `<span class="text-orange-400/90 font-bold">${item.category}</span>` : ''}
+            ${item.rating > 0 ? `<span class="text-amber-400 font-bold">★ ${item.rating.toFixed(1)}</span>` : ''}
+          </div>
+        </div>
+        <div class="text-gray-500 group-hover:text-orange-400 px-2 transition-colors flex-shrink-0">
+          <svg class="w-5 h-5 fill-current rtl:rotate-180" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
+      `;
+
+      resultsList.appendChild(card);
+    });
+  }
+
+  // Keyboard navigation & Shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Open Search Modal on Slash '/' or Ctrl+K / Cmd+K if not in an input
+    if ((e.key === '/' || (e.key === 'k' && (e.ctrlKey || e.metaKey))) && document.activeElement?.tagName !== 'INPUT') {
+      e.preventDefault();
+      openSearchModal();
+      return;
+    }
+
+    if (searchModal && !searchModal.classList.contains('pointer-events-none')) {
+      if (e.key === 'Escape') {
+        closeSearchModal();
+        return;
+      }
+
+      const items = Array.from(document.querySelectorAll('.search-result-item')) as HTMLAnchorElement[];
+      if (items.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % items.length;
+        highlightItem(items, selectedIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+        highlightItem(items, selectedIndex);
+      } else if (e.key === 'Enter' && selectedIndex >= 0 && items[selectedIndex]) {
+        e.preventDefault();
+        items[selectedIndex].click();
+      }
+    }
+  });
+
+  function highlightItem(items: HTMLAnchorElement[], index: number) {
+    items.forEach((item, i) => {
+      if (i === index) {
+        item.classList.add('bg-[#252a42]', 'border-orange-500');
+        item.scrollIntoView({ block: 'nearest' });
+      } else {
+        item.classList.remove('bg-[#252a42]', 'border-orange-500');
+      }
+    });
+  }
+
+  // Event Listeners
+  if (searchInput) {
+    let debounceTimer: any = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(handleSearchInput, 50);
+    });
+  }
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      if (searchInput) searchInput.focus();
+      handleSearchInput();
+    });
+  }
+
+  if (searchCloseBtn) {
+    searchCloseBtn.addEventListener('click', closeSearchModal);
+  }
+
+  if (searchModal) {
+    searchModal.addEventListener('click', (e) => {
+      if (e.target === searchModal) {
+        closeSearchModal();
+      }
+    });
+  }
+
+  if (retryBtn) {
+    retryBtn.addEventListener('click', () => {
+      catalogCache = null;
+      handleSearchInput();
+    });
+  }
+
+  // Attach global triggers
+  (window as any).openDramaProSearch = openSearchModal;
+  (window as any).closeDramaProSearch = closeSearchModal;
+
+  document.addEventListener('click', (e) => {
+    const trigger = (e.target as HTMLElement).closest('[data-search-trigger]');
+    if (trigger) {
+      e.preventDefault();
+      const initialVal = trigger.getAttribute('data-search-value') || '';
+      openSearchModal(initialVal);
+    }
+  });
+</script>
